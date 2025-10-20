@@ -1,0 +1,2 @@
+# FlamekeeperBot
+Flameborn Discord Bot
