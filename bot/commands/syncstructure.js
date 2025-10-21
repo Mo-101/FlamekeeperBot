@@ -41,7 +41,7 @@ const STRUCTURE = [
     children: [
       { name: '📝-how-to-verify',       type: 0, overwrites: { [EVERYONE]: { ViewChannel: true, SendMessages: false }, 'Core Team': { SendMessages: true } } },
       { name: '🎯-first-54-apply',      type: 0 },
-      { name: '♡-approved-guardians',  type: 0, overwrites: { [EVERONE]: { ViewChannel: true, SendMessages: false }, 'Core Team': { SendMessages: true } } },
+      { name: '♡-approved-guardians',  type: 0, overwrites: { [EVERYONE]: { ViewChannel: true, SendMessages: false }, 'Core Team': { SendMessages: true } } },
       { name: '❓-validator-faq',       type: 0, overwrites: { [EVERYONE]: { ViewChannel: true, SendMessages: false }, 'Core Team': { SendMessages: true } } },
     ],
   },
