@@ -1,59 +1,67 @@
-import { donationRouter } from '../utils/celo.js';
-import { createImpactEmbed } from '../utils/embeds.js';
+import { ethers } from 'ethers';
+import { FlameBornEngine, provider } from '../utils/celo.js';
+import { createEventEmbed } from '../utils/embeds.js';
 
-let liveUpdatesChannelId = null;
-let liveUpdatesRegistered = false;
+let liveStreamChannelId = null;
+let listenerRegistered = false;
 
 export const data = {
   name: 'impact',
-  description: 'Share the latest proof-of-impact donations flowing through FlameBorn',
+  description: 'Stream live donation events from the FlameBornEngine on Celo',
 };
 
-async function ensureLiveUpdates(channel) {
-  if (liveUpdatesRegistered) {
-    if (liveUpdatesChannelId !== channel.id) {
-      await channel.send('🔁 Live donation updates are already streaming in another channel. Ask a Guardian to move them if needed.');
-    }
+function registerDonationListener(channel) {
+  if (listenerRegistered) {
     return;
   }
 
-  donationRouter.on('DonationProcessed', (donor, amount, beneficiary, event) => {
-    const embed = createImpactEmbed(donor, amount, beneficiary, event?.blockNumber);
-    channel.send({ embeds: [embed] }).catch((error) => {
-      console.error('Failed to send live donation update', error);
-    });
+  FlameBornEngine.on('DonationProcessed', (donor, amount, beneficiary) => {
+    const formattedAmount = ethers.formatEther(amount);
+    const description = `**Donor:** ${donor}\n**Beneficiary:** ${beneficiary}\n**Amount:** ${formattedAmount} CELO`;
+    const embed = createEventEmbed('💧 Proof of Healing Recorded', description);
+    channel
+      .send({ embeds: [embed] })
+      .catch((error) => console.error('Failed to send donation event', error));
   });
 
-  liveUpdatesChannelId = channel.id;
-  liveUpdatesRegistered = true;
-  await channel.send('💧 Live donation stream ignited — every new act of care will appear here.');
+  listenerRegistered = true;
+  liveStreamChannelId = channel.id;
 }
 
-async function fetchLatestDonations(limit = 3) {
-  const filter = donationRouter.filters.DonationProcessed();
-  const latestEvents = await donationRouter.queryFilter(filter, -5000);
-  if (!latestEvents.length) return [];
-  return latestEvents.slice(-limit).reverse();
+async function fetchRecentDonations(limit = 3) {
+  const filter = FlameBornEngine.filters.DonationProcessed();
+  const latestBlock = await provider.getBlockNumber();
+  const startBlock = Math.max(0, latestBlock - 5000);
+  const events = await FlameBornEngine.queryFilter(filter, startBlock, latestBlock);
+  return events.slice(-limit).reverse();
 }
 
 export async function execute(message) {
-  await message.channel.send('🌍 Listening to the ledger. Gathering the latest ripples of impact...');
+  await message.channel.send('💧 Listening for FlameBornEngine donations on Celo Alfajores...');
+
+  if (listenerRegistered && liveStreamChannelId !== message.channel.id) {
+    await message.channel.send('🔁 Live donation updates are already streaming in another channel.');
+    return;
+  }
 
   try {
-    const events = await fetchLatestDonations();
-    if (!events.length) {
-      await message.channel.send('🕯️ No recent donations found on the chain. The next spark will light this channel.');
+    const recentEvents = await fetchRecentDonations();
+    if (recentEvents.length === 0) {
+      await message.channel.send('🕯️ The chain is quiet for now. New donations will appear here in real time.');
     } else {
-      for (const event of events) {
+      for (const event of recentEvents) {
         const { donor, amount, beneficiary } = event.args;
-        const embed = createImpactEmbed(donor, amount, beneficiary, event.blockNumber);
+        const formattedAmount = ethers.formatEther(amount);
+        const description = `**Donor:** ${donor}\n**Beneficiary:** ${beneficiary}\n**Amount:** ${formattedAmount} CELO`;
+        const embed = createEventEmbed('💧 Proof of Healing Recorded', description);
         await message.channel.send({ embeds: [embed] });
       }
     }
 
-    await ensureLiveUpdates(message.channel);
+    registerDonationListener(message.channel);
+    await message.channel.send('🔥 Live donation stream activated.');
   } catch (error) {
     console.error('impact command failed', error);
-    await message.channel.send('🔥 The ledger is veiled right now. Please try again soon.');
+    await message.channel.send('🔥 Unable to read donation events right now. Please try again later.');
   }
 }

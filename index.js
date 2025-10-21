@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 config();
 
-const requiredEnv = ['DISCORD_TOKEN', 'CELO_RPC', 'REGISTRY_CONTRACT', 'DONATION_CONTRACT'];
+const requiredEnv = ['DISCORD_TOKEN', 'CELO_RPC', 'FLB_TOKEN_CONTRACT', 'FLB_ENGINE_CONTRACT', 'FLB_HEALTHIDNFT_CONTRACT'];
 const missing = requiredEnv.filter((key) => !process.env[key]);
 if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
@@ -33,26 +33,19 @@ async function registerCommands() {
     if (!file.endsWith('.js')) continue;
     const fileUrl = pathToFileURL(path.join(commandsDir, file)).href;
     const commandModule = await import(fileUrl);
-    const { data, execute, onInit } = commandModule;
+    const { data, execute } = commandModule;
     if (!data?.name || typeof execute !== 'function') {
       console.warn(`⚠️  Skipping command at ${file} because it is missing a name or execute handler.`);
       continue;
     }
-    client.commands.set(data.name, { execute, onInit });
+    client.commands.set(data.name, commandModule);
   }
 }
 
 await registerCommands();
 
-for (const [name, command] of client.commands) {
-  if (typeof command.onInit === 'function') {
-    await command.onInit(client);
-    console.log(`✅ Initialized command: ${name}`);
-  }
-}
-
 client.once(Events.ClientReady, (readyClient) => {
-  console.log(`🔥 FlameKeeper is online as ${readyClient.user.tag}`);
+  console.log(`🔥 FlameKeeper connected as ${readyClient.user.tag} | Network: Celo Alfajores`);
 });
 
 client.on(Events.MessageCreate, async (message) => {

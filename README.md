@@ -1,87 +1,116 @@
-# FlameKeeper Bot
+# 🔥 FlameKeeper — FlameBorn DAO Discord Bridge (Celo Alfajores)
 
-FlameKeeper is the spiritual guide of the FlameBorn DAO Discord — bridging on-chain governance, impact, and community care. This starter template provides a working Node.js bot that connects to the Celo blockchain, verifies health actors, and streams donation impact directly into your server.
+FlameKeeper connects the FlameBorn DAO Discord community directly to on-chain activity on the **Celo Alfajores Network (Chain ID: 44787)**. It monitors verified Health Actors, tracks donations, and broadcasts "Proof of Healing" events in real time.
 
-## Features
+---
 
-- 🔐 **Wallet Verification** — `!verify <address>` checks the HealthActorRegistry smart contract.
-- 💧 **Impact Streaming** — `!impact` shares recent donations and subscribes the channel to live `DonationProcessed` events.
-- 🔌 **Celo Connectivity** — Utility helpers wire the bot to Celo RPC endpoints via `ethers` v6.
-- 🧱 **Modular Architecture** — Commands and utilities are organized for quick expansion (rewards, proposals, education, etc.).
+## 🌍 Verified Contracts
 
-## Prerequisites
+| Contract | Address | Description |
+|-----------|----------|--------------|
+| **FlameBornToken (Proxy)** | `0x2806D0C068E0Bdd553Fd9d533C40cAFA6657b5f1` | ERC20 Upgradeable Token |
+| **FlameBornEngine (Proxy)** | `0x82cA6C5FE9d7E834D908a2482aB76A51D64f5BB4` | Learn-to-Earn Engine |
+| **FlameBornHealthIDNFT** | `0x1566c75a1Bad93a9fa5E2Da690395987E36e08e8` | Soulbound NFT for Health Verification |
 
-- Node.js 18+
-- A Discord bot token (create one in the [Discord Developer Portal](https://discord.com/developers/applications)).
-- Access to the relevant Celo contracts:
-  - HealthActorRegistry contract address
-  - DonationRouter contract address
+---
 
-## Getting Started
+## 🧾 Environment Variables
 
-1. **Install dependencies**
+Copy `.env.example` to `.env` and fill in any secrets:
 
-   ```bash
-   npm install
-   ```
+```bash
+cp .env.example .env
+```
 
-2. **Configure environment variables**
+| Variable | Description |
+|----------|-------------|
+| `DISCORD_TOKEN` | Discord bot token |
+| `GUILD_ID` | Discord server ID (optional, for future role sync) |
+| `DONATION_FEED_CHANNEL` | Channel ID for automatic donation posts (optional) |
+| `CELO_RPC` | RPC endpoint for the Celo Alfajores network |
+| `FLB_TOKEN_CONTRACT` | FlameBornToken proxy address |
+| `FLB_ENGINE_CONTRACT` | FlameBornEngine proxy address |
+| `FLB_HEALTHIDNFT_CONTRACT` | FlameBornHealthIDNFT contract address |
+| `CHAIN_ID` | 44787 (Celo Alfajores) |
 
-   Copy `.env.example` to `.env` and fill in the required values:
+---
 
-   ```bash
-   cp .env.example .env
-   ```
-
-   | Variable | Description |
-   | --- | --- |
-   | `DISCORD_TOKEN` | Discord bot token |
-   | `CELO_RPC` | RPC endpoint for the Celo network (Alfajores by default) |
-   | `REGISTRY_CONTRACT` | HealthActorRegistry contract address |
-   | `DONATION_CONTRACT` | DonationRouter contract address |
-
-3. **Start the bot**
-
-   ```bash
-   npm start
-   ```
-
-   The console should confirm: `🔥 FlameKeeper is online as <BotName>`.
-
-## Command Reference
+## 🧩 Commands
 
 | Command | Description |
-| --- | --- |
-| `!verify <wallet>` | Confirms whether a wallet is a verified health actor. |
-| `!impact` | Fetches the most recent donations and enables live updates in the channel. |
+|----------|--------------|
+| `!verify <wallet>` | Confirms if a wallet holds a HealthID NFT |
+| `!impact` | Streams live `DonationProcessed` events |
+| `!linkwallet <wallet>` | Placeholder for Codex wallet linking integration |
+| `!assignrole` | Placeholder for Codex role synchronization |
 
-## Project Structure
+---
+
+## ⚙️ Setup
+
+```bash
+npm install
+npm start
+```
+
+Console output:
 
 ```
-.
+🔥 FlameKeeper connected as FlameKeeper#0001 | Network: Celo Alfajores
+```
+
+In Discord:
+
+```
+!verify 0x...
+!impact
+```
+
+---
+
+## 🧱 Project Structure
+
+```
+flamekeeper/
+├── index.js
 ├── commands/
-│   ├── impact.js         # Donation feed command and event stream
-│   └── verify.js         # Health actor verification command
+│   ├── verify.js
+│   ├── impact.js
+│   ├── linkwallet.js
+│   └── assignrole.js
 ├── utils/
-│   ├── celo.js           # Celo RPC + contract helpers
-│   └── embeds.js         # Discord embed templates
-├── .env.example          # Required configuration variables
-├── index.js              # Bot bootstrap and command loader
+│   ├── celo.js
+│   └── embeds.js
+├── .env.example
 ├── package.json
 └── README.md
 ```
 
-## Next Steps
+---
 
-- 🔗 Add `!linkwallet` to connect Discord IDs with verified wallets.
-- 🗳️ Integrate Snapshot or GuardianDAO feeds for proposal alerts.
-- 🎁 Build `!reward` transactions for LearnToEarn quests.
-- 🛡️ Enforce role-based permissions so Guardians steward the flame.
+## 🧠 Network Info
 
-## Security Notes
+- **Chain ID:** 44787
+- **RPC:** https://alfajores-forno.celo-testnet.org
+- **Explorer:** https://celo-alfajores.blockscout.com/
 
-- Never commit your `.env` file — it contains sensitive tokens.
-- Use a dedicated bot wallet with limited privileges for on-chain actions.
-- Rotate tokens periodically and monitor bot activity with Discord audit logs.
+---
+
+## 🔐 Security Notes
+
+- All contract addresses sourced from `PROVENANCE.md` deployments.
+- The bot runs in read-only mode (no private keys required).
+- Never commit `.env` or share your Discord token publicly.
+
+---
+
+## 🕯️ Example Output
+
+```
+💧 Proof of Healing Recorded
+Donor: 0x6d...2F
+Beneficiary: 0x1b...A9
+Amount: 10 CELO
+```
 
 Keep the Flame burning bright! 🔥

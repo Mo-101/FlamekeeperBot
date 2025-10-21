@@ -1,32 +1,34 @@
-import { registry } from '../utils/celo.js';
 import { isAddress } from 'ethers';
+import { HealthIDNFT } from '../utils/celo.js';
+import { createEventEmbed } from '../utils/embeds.js';
 
 export const data = {
   name: 'verify',
-  description: 'Check if a wallet is a verified health actor on Celo',
+  description: 'Verify whether a wallet holds a FlameBorn HealthID NFT on Celo',
 };
 
 export async function execute(message, args) {
-  if (args.length < 1) {
-    await message.reply('🕯️ Please provide a wallet address like `!verify 0x1234...`');
+  const wallet = args[0];
+  if (!wallet) {
+    await message.reply('Usage: `!verify <wallet>`');
     return;
   }
 
-  const address = args[0];
-  if (!isAddress(address)) {
-    await message.reply('⚠️ That does not look like a valid wallet address. Double-check and try again.');
+  if (!isAddress(wallet)) {
+    await message.reply('⚠️ That does not look like a valid wallet address.');
     return;
   }
 
   try {
-    const isVerified = await registry.isVerified(address);
-    if (isVerified) {
-      await message.reply(`✅ ${address} is recognized as a verified Health Actor. The Flame honors their service.`);
-    } else {
-      await message.reply(`❌ ${address} is not yet verified in the HealthActorRegistry.`);
-    }
+    const balance = await HealthIDNFT.balanceOf(wallet);
+    const verified = balance > 0n;
+    const description = verified
+      ? `✅ **${wallet}** holds a verified HealthID soulbound NFT. The village recognizes this healer.`
+      : `❌ **${wallet}** has not yet received a HealthID NFT. Invite them to complete verification.`;
+    const embed = createEventEmbed('🩺 Health ID Verification', description, verified ? '#00FF88' : '#FF4500');
+    await message.channel.send({ embeds: [embed] });
   } catch (error) {
     console.error('verify command failed', error);
-    await message.reply('🔥 The chain is quiet right now. Please try again in a moment.');
+    await message.reply('🔥 Unable to reach the chain right now. Please try again soon.');
   }
 }
