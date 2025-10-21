@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { startKeepAlive } from './utils/keepalive.js';
 
 config();
 
@@ -68,4 +69,5 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
+startKeepAlive();
 client.login(process.env.DISCORD_TOKEN);
