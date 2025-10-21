@@ -46,9 +46,6 @@ async function registerCommands() {
 
 await registerCommands();
 
-// Add debug output to see which commands were loaded
-console.log('Loaded commands:', [...client.commands.keys()]);
-
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`🔥 FlameKeeper connected as ${readyClient.user.tag} | Network: Celo Alfajores`);
 });
