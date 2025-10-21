@@ -3,7 +3,6 @@ import { config } from 'dotenv';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { startKeepAlive } from './utils/keepalive.js';
 
 config();
 
@@ -69,5 +68,13 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-startKeepAlive();
 client.login(process.env.DISCORD_TOKEN);
+
+// Optional: minimal health server if running as a Web Service on Render
+import express from 'express';
+const port = process.env.PORT;
+if (port) {
+  const app = express();
+  app.get('/health', (_req, res) => res.status(200).send('OK'));
+  app.listen(port, () => console.log(`Health server on :${port}`));
+}
