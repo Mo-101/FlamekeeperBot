@@ -1,124 +1,102 @@
-import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import { config } from 'dotenv';
-import { readdir } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createHttp } from './http.js';
-import { ethers } from 'ethers';
-import { createEventEmbed } from './utils/embeds.js';
+import { Client, GatewayIntentBits } from "discord.js";
+import dotenv from "dotenv";
+import { createHttp } from "./http.js";
+import {
+  handleVerifyCommand,
+  handleImpactCommand,
+  handleLinkWalletCommand,
+  handleAssignRoleCommand,
+} from "./commands/index.js";
+import {
+  postDonation,
+  runSyncStructure,
+  setupCeloListeners,
+} from "./utils/celo.js";
 
-// Configure dotenv
-config({ override: true });
+require('dotenv').config();
+const { Client, GatewayIntentBits } = require('discord.js');
 
-const requiredEnv = [
-  'DISCORD_TOKEN',
-  'CELO_RPC',
-  'FLB_TOKEN_CONTRACT',
-  'FLB_ENGINE_CONTRACT',
-  'FLB_HEALTHIDNFT_CONTRACT',
-  'ADMIN_API_KEY',
-  'WEBHOOK_SECRET',
-  'GUILD_ID'
-];
 
-const missing = requiredEnv.filter((key) => !process.env[key]);
-if (missing.length > 0) {
-  throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-}
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+const GUILD_ID = process.env.GUILD_ID;
+const DONATIONS_CHANNEL_ID = process.env.DONATIONS_CHANNEL_ID;
+const ANNOUNCE_CHANNEL_ID = process.env.ANNOUNCE_CHANNEL_ID;
+const GUARDIAN_ROLE_NAME = process.env.GUARDIAN_ROLE_NAME || "Guardian";
+const CORE_TEAM_ROLE_NAME = process.env.CORE_TEAM_ROLE_NAME || "CoreTeam";
+const PORT = process.env.PORT;
 
-const client = new Client({
+const discordClient = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
   ],
 });
 
-client.commands = new Collection();
-const prefix = '!';
+  discordClient.once('ready', () => {
+      console.log('FlameKeeper Bot is online and ready!');
+  });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+  discordClient.on('messageCreate', message => {
+      if (message.content === '!ping') {
+          message.channel.send('Pong!');
+      }
+  });
 
-async function registerCommands() {
-  const commandsDir = path.join(__dirname, 'commands');
-  const files = await readdir(commandsDir);
-  for (const file of files) {
-    if (!file.endsWith('.js')) continue;
-    const fileUrl = pathToFileURL(path.join(commandsDir, file)).href;
-    const commandModule = await import(fileUrl);
-    const { data, execute } = commandModule;
-    if (!data?.name || typeof execute !== 'function') {
-      console.warn(`⚠️  Skipping command at ${file} because it is missing a name or execute handler.`);
-      continue;
-    }
-    client.commands.set(data.name, commandModule);
-  }
-}
+  // Setup Celo event listeners
+  setupCeloListeners(discordClient, DONATIONS_CHANNEL_ID);
 
-await registerCommands();
+  // Start HTTP server if PORT is configured
+  if (PORT) {
+    const app = createHttp({
+      discordClient,
+      postDonation,
+      runSyncStructure: async ({ dry }) => {
+        // This is a placeholder for the actual structure sync logic
+        // In a real scenario, this would interact with Discord API to
+        // ensure roles, channels, etc., match a desired structure.
+        console.log(`Running structure sync (dry run: ${dry})`);
+        const guild = await discordClient.guilds.fetch(GUILD_ID);
+        const roles = await guild.roles.fetch();
+        const channels = await guild.channels.fetch();
 
-client.once(Events.ClientReady, (readyClient) => {
-  console.log(`🔥 FlameKeeper connected as ${readyClient.user.tag} | Network: Celo Alfajores`);
-});
-
-client.on(Events.MessageCreate, async (message) => {
-  if (!message.content.startsWith(prefix) || message.author.bot) {
-    return;
-  }
-
-  const args = message.content.slice(prefix.length).trim().split(/\s+/);
-  const commandName = args.shift()?.toLowerCase();
-  if (!commandName) return;
-
-  const command = client.commands.get(commandName);
-  if (!command) return;
-
-  try {
-    await command.execute(message, args);
-  } catch (error) {
-    console.error(`Error executing command ${commandName}:`, error);
-    await message.reply('🔥 The Flame flickered unexpectedly. Please try again later.');
+        const result = {
+          roles: roles.map((r) => ({ id: r.id, name: r.name })),
+          channels: channels.map((c) => ({ id: c.id, name: c.name })),
+        };
+        return result;
+      },
+    });
+    app.listen(PORT, () => {
+      console.log(`HTTP server listening on port ${PORT}`);
+    });
   }
 });
 
-// Helper function to post a donation embed to a configured channel
-async function postDonationToDiscord({ donor, beneficiary, amountWei, txHash }) {
-  const channelId = process.env.DONATIONS_CHANNEL_ID;
-  if (!channelId) return;
-  const channel = await client.channels.fetch(channelId);
-  if (!channel?.isTextBased()) return;
+discordClient.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
 
-  const amount = ethers.formatEther(amountWei);
-  const desc = `**Donor:** ${donor}\n**Beneficiary:** ${beneficiary}\n**Amount:** ${amount} CELO${txHash ? `\n**Tx:** ${txHash}` : ''}`;
-  const embed = createEventEmbed('💧 Proof of Healing Recorded', desc);
-  await channel.send({ embeds: [embed] });
-}
+  const args = message.content.split(/\s+/);
+  const command = args[0].toLowerCase();
 
-// Allow HTTP layer to call your syncstructure code (trigger via command or function)
-async function runSyncStructure({ dry }) {
-  // simplest: send the command into the channel where you run ops, or invoke command logic directly.
-  // If your syncstructure is implemented as a command file exporting execute(), import and call it here.
-  try {
-    const { execute } = await import('./commands/syncstructure.js');
-    // pick a channel where the bot has permission to send messages (optional for logs)
-    const channelId = process.env.ANNOUNCE_CHANNEL_ID || process.env.DONATIONS_CHANNEL_ID;
-    const channel = channelId ? await client.channels.fetch(channelId) : null;
-    const fakeMessage = channel ? { guild: channel.guild, channel, member: await channel.guild.members.fetchMe(), reply: (...a) => channel.send(...a) } : { guild: null };
-    await execute(fakeMessage, [dry ? 'dry' : '']);
-    return { status: dry ? 'dry-run' : 'applied' };
-  } catch (e) {
-    console.error('runSyncStructure failed', e);
-    throw e;
+  switch (command) {
+    case "!verify":
+      await handleVerifyCommand(message, args);
+      break;
+    case "!impact":
+      await handleImpactCommand(message);
+      break;
+    case "!linkwallet":
+      await handleLinkWalletCommand(message, args);
+      break;
+    case "!assignrole":
+      await handleAssignRoleCommand(message, args);
+      break;
+    default:
+      // Optionally handle unknown commands or do nothing
+      break;
   }
-}
+});
 
-// Configure the HTTP server
-const port = process.env.PORT;
-if (port) {
-  const app = createHttp({ discordClient: client, postDonation: postDonationToDiscord, runSyncStructure });
-  app.listen(port, () => console.log(`HTTP server listening on :${port}`));
-}
-
-// Log in to Discord
-client.login(process.env.DISCORD_TOKEN);
+discordClient.login(DISCORD_TOKEN);
