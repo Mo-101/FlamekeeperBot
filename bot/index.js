@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import dotenv from "dotenv";
 import { createHttp } from "./http.js";
+import { runSyncStructure} from "./utils/structure.js";
 import {
   handleVerifyCommand,
   handleImpactCommand,
@@ -72,7 +72,6 @@ const discordClient = new Client({
       console.log(`HTTP server listening on port ${PORT}`);
     });
   }
-});
 
 discordClient.on("messageCreate", async (message) => {
   if (message.author.bot) return;

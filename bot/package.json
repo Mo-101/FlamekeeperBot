@@ -1,7 +1,7 @@
 {
   "name": "flamekeeper-bot",
   "version": "1.1.0",
-  "description": "FlameKeeper \u2013 Discord bridge for FlameBorn DAO on Celo Alfajores",
+  "description": "FlameKeeper – Discord bridge for FlameBorn DAO on Celo Alfajores",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -22,5 +22,8 @@
     "dotenv": "^16.4.5",
     "ethers": "^6.12.2"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
 }
