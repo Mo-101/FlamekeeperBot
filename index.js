@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits } from "discord.js";
 import { config } from "dotenv";
 import { ethers } from "ethers";
 import path from "node:path";
@@ -8,6 +8,7 @@ import * as verifyCommand from "./commands/verify.js";
 import * as impactCommand from "./commands/impact.js";
 import * as linkWalletCommand from "./commands/linkwallet.js";
 import * as assignRoleCommand from "./commands/assignrole.js";
+import * as syncStructureCommand from "./commands/syncstructure.js";
 import { FlameBornEngine } from "./utils/celo.js";
 import { createEventEmbed } from "./utils/embeds.js";
 
@@ -151,12 +152,15 @@ if (PORT) {
 /**
  * Discord bot ready event
  */
-discordClient.once("ready", () => {
-  console.log("🔥 FlameKeeper Bot is online and ready!");
-  console.log(`📛 Logged in as: ${discordClient.user.tag}`);
-  console.log(`🏢 Serving ${discordClient.guilds.cache.size} guild(s)`);
+const onReady = (readyClient) => {
+  console.log(`🔥 FlameKeeper Bot is online and ready!`);
+  console.log(`📛 Logged in as: ${readyClient.user.tag}`);
+  console.log(`🏢 Serving ${readyClient.guilds.cache.size} guild(s)`);
   setupCeloListeners();
-});
+};
+
+discordClient.once(Events.ClientReady, onReady);
+discordClient.once("ready", onReady);
 
 /**
  * Command prefix and handlers
@@ -172,9 +176,12 @@ const commandHandlers = new Map([
   ["verify", (message, args) => verifyCommand.execute(message, args)],
   ["impact", (message) => impactCommand.execute(message)],
   ["linkwallet", (message, args) => linkWalletCommand.execute(message, args)],
-  ["assignrole", (message, args) => assignRoleCommand.execute(message, args)],
+  ['assignrole', (message, args) => assignRoleCommand.execute(message, args)],
+  ['syncstructure', (message, args) => syncStructureCommand.execute(message, args)],
   ["help", async (message) => {
-    const commands = Array.from(commandHandlers.keys()).map(cmd => `\`${prefix}${cmd}\``).join(", ");
+    const commands = Array.from(commandHandlers.keys()).map(cmd => `
+${prefix}${cmd}
+`).join(", ");
     await message.channel.send(`📋 **Available Commands:**\n${commands}`);
   }],
 ]);
@@ -197,7 +204,9 @@ discordClient.on("messageCreate", async (message) => {
   // Find and execute command
   const handler = commandHandlers.get(commandName);
   if (!handler) {
-    await message.reply(`❌ Unknown command. Use \`${prefix}help\` to see available commands.`);
+    await message.reply(`❌ Unknown command. Use 
+${prefix}help
+ to see available commands.`);
     return;
   }
 

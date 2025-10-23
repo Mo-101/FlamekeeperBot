@@ -1,4 +1,4 @@
-import { createEventEmbed } from '../utils/embeds.js';
+import { createEventEmbed } from './utils/embeds.js';
 
 export const data = {
   name: 'assignrole',

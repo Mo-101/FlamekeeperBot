@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlameKeeper Bot Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #ff6b35;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.online {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.offline {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .endpoint {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ff6b35;
+        }
+        .method {
+            font-weight: bold;
+            color: #ff6b35;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 FlameKeeper Bot Dashboard</h1>
+        
+        <div id="health-status" class="status">
+            Checking bot status...
+        </div>
+
+        <h2>API Endpoints</h2>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <code>/health</code>
+            <p>Check if the bot is running and healthy.</p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/api/guardians/apply</code>
+            <p>Apply to become a Guardian. Body: <code>{ "discordId": "string", "wallet": "string", "note": "string" }</code></p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">GET</span> <code>/api/guardians/list?status=pending</code>
+            <p>List guardians by status (requires admin auth).</p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/api/guardians/approve</code>
+            <p>Approve a guardian application (requires admin auth). Body: <code>{ "discordId": "string" }</code></p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/api/guardians/reject</code>
+            <p>Reject a guardian application (requires admin auth). Body: <code>{ "discordId": "string", "reason": "string" }</code></p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">GET</span> <code>/api/roles</code>
+            <p>List all Discord roles (requires admin auth).</p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/api/roles/assign</code>
+            <p>Assign a role to a user (requires admin auth). Body: <code>{ "userId": "string", "roleName": "string" }</code></p>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/webhooks/donation</code>
+            <p>Post a donation event (requires webhook signature).</p>
+        </div>
+
+        <h2>Discord Commands</h2>
+        <ul>
+            <li><code>!ping</code> - Check bot latency</li>
+            <li><code>!verify &lt;wallet&gt;</code> - Verify wallet ownership of HealthID NFT</li>
+            <li><code>!impact</code> - Stream live donation events</li>
+            <li><code>!linkwallet &lt;wallet&gt;</code> - Link wallet (placeholder)</li>
+            <li><code>!assignrole</code> - Assign roles (placeholder)</li>
+            <li><code>!help</code> - Show available commands</li>
+        </ul>
+    </div>
+
+    <script>
+        async function checkHealth() {
+            const statusDiv = document.getElementById('health-status');
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    statusDiv.className = 'status online';
+                    statusDiv.textContent = '✅ Bot is online and healthy';
+                } else {
+                    throw new Error('Health check failed');
+                }
+            } catch (error) {
+                statusDiv.className = 'status offline';
+                statusDiv.textContent = '❌ Bot is offline or unreachable';
+            }
+        }
+
+        // Check health on page load
+        checkHealth();
+    </script>
+</body>
+</html>

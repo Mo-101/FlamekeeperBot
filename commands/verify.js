@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
-import { HealthIDNFT } from '../utils/celo.js';
-import { createEventEmbed } from '../utils/embeds.js';
+import { HealthIDNFT } from './utils/celo.js';
+import { createEventEmbed } from './utils/embeds.js';
 
 export const data = {
   name: 'verify',

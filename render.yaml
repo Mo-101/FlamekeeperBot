@@ -2,7 +2,6 @@ services:
   # 1) Discord bot worker
   - type: worker
     name: flamekeeper-bot
-    rootDir: bot
     env: node
     buildCommand: npm install
     startCommand: npm start
@@ -29,7 +28,6 @@ services:
   # 2) HTTP API/webhooks service
   - type: web
     name: flamekeeper-api
-    rootDir: bot
     env: node
     buildCommand: npm install
     startCommand: npm start

@@ -1,6 +1,11 @@
 // bot/http.js
 import express from 'express';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // In-memory store for Guardians (swap to DB later without changing API)
 const guardians = new Map(); // key: discordId -> { wallet, note, status, createdAt, decidedBy, decidedAt, reason }
@@ -8,6 +13,9 @@ const guardians = new Map(); // key: discordId -> { wallet, note, status, create
 export function createHttp({ discordClient, postDonation, runSyncStructure }) {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+  
+  // Serve static files from the root directory
+  app.use(express.static(__dirname));
 
   // ---- Required env (index.js should already enforce when PORT is set) ----
   const ADMIN_API_KEY       = process.env.ADMIN_API_KEY;
@@ -35,7 +43,7 @@ export function createHttp({ discordClient, postDonation, runSyncStructure }) {
       return crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(sig)); 
     } catch { 
       return false; 
-    }
+    } 
   }
 
   async function fetchGuild() {
@@ -126,7 +134,7 @@ export function createHttp({ discordClient, postDonation, runSyncStructure }) {
     }
   });
 
-  // ================= Guardians ("First 54") ================
+  // ================= Guardians ("First 54") ================ 
 
   // Public apply
   // body: { discordId, wallet, note? }
@@ -190,7 +198,7 @@ export function createHttp({ discordClient, postDonation, runSyncStructure }) {
     res.json({ ok: true });
   });
 
-  // ================= Structure Sync trigger ================
+  // ================= Structure Sync trigger ================ 
 
   // body: { dry?: boolean }
   app.post('/api/sync-structure', requireAdmin, async (req, res) => {
@@ -204,7 +212,7 @@ export function createHttp({ discordClient, postDonation, runSyncStructure }) {
     }
   });
 
-  // ================= Donation Webhook (HMAC) ================
+  // ================= Donation Webhook (HMAC) ================ 
 
   // body: { donor, beneficiary, amountWei, txHash? }
   app.post('/webhooks/donation', async (req, res) => {

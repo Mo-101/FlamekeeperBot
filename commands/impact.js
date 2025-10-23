@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
-import { FlameBornEngine, provider } from '../utils/celo.js';
-import { createEventEmbed } from '../utils/embeds.js';
+import { FlameBornEngine, provider } from './utils/celo.js';
+import { createEventEmbed } from './utils/embeds.js';
 
 let liveStreamChannelId = null;
 let listenerRegistered = false;
