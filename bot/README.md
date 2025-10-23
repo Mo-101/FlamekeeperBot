@@ -94,8 +94,8 @@ bot/
 ## 🧠 Network Info
 
 - **Chain ID:** 44787
-- **RPC:** https://alfajores-forno.celo-testnet.org
-- **Explorer:** https://celo-alfajores.blockscout.com/
+- **RPC:** <https://alfajores-forno.celo-testnet.org>
+- **Explorer:** <https://celo-alfajores.blockscout.com/>
 
 ---
 
