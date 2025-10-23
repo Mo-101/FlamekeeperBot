@@ -1,10 +1,59 @@
 services:
+  # 1) Discord bot worker
   - type: worker
     name: flamekeeper-bot
     rootDir: bot
-    runtime: node
+    env: node
     buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: DONATIONS_CHANNEL_ID
+        sync: false
+      - key: ANNOUNCE_CHANNEL_ID
+        sync: false
+      - key: CELO_RPC
+        sync: false
+      - key: FLB_TOKEN_CONTRACT
+        sync: false
+      - key: FLB_ENGINE_CONTRACT
+        sync: false
+      - key: FLB_HEALTHIDNFT_CONTRACT
+        sync: false
+
+  # 2) HTTP API/webhooks service
+  - type: web
+    name: flamekeeper-api
+    rootDir: bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: DONATIONS_CHANNEL_ID
+        sync: false
+      - key: ANNOUNCE_CHANNEL_ID
+        sync: false
+      - key: CELO_RPC
+        sync: false
+      - key: FLB_TOKEN_CONTRACT
+        sync: false
+      - key: FLB_ENGINE_CONTRACT
+        sync: false
+      - key: FLB_HEALTHIDNFT_CONTRACT
+        sync: false
